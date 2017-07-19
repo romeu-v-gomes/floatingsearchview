@@ -2024,6 +2024,15 @@ public class FloatingSearchView extends FrameLayout {
         ViewCompat.animate(mSuggestionListContainer).cancel();
     }
 
+    @Override
+    protected void onVisibilityChanged(@NonNull View changedView, int visibility) {
+        super.onVisibilityChanged(changedView, visibility);
+
+        if (visibility != VISIBLE) {
+            Util.closeSoftKeyboard(mHostActivity);
+        }
+    }
+
     private class DrawerListener implements DrawerLayout.DrawerListener {
         @Override
         public void onDrawerSlide(View drawerView, float slideOffset) {
