@@ -247,9 +247,10 @@ public class FloatingSearchView extends FrameLayout {
          * Called when a suggestion was clicked indicating
          * that the current search has completed.
          *
-         * @param searchSuggestion
+         * @param searchSuggestion Suggestion clicked.
+         * @param position Position of the clicked suggestion.
          */
-        void onSuggestionClicked(SearchSuggestion searchSuggestion);
+        void onSuggestionClicked(SearchSuggestion searchSuggestion, int position);
 
         /**
          * Called when the current search has completed
@@ -1285,9 +1286,9 @@ public class FloatingSearchView extends FrameLayout {
                 new SearchSuggestionsAdapter.Listener() {
 
                     @Override
-                    public void onItemSelected(SearchSuggestion item) {
+                    public void onItemSelected(SearchSuggestion item, int position) {
                         if (mSearchListener != null) {
-                            mSearchListener.onSuggestionClicked(item);
+                            mSearchListener.onSuggestionClicked(item, position);
                         }
 
                         if (mDismissFocusOnItemSelection) {

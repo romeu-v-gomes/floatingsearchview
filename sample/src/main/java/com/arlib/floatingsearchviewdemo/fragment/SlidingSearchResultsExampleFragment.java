@@ -105,7 +105,7 @@ public class SlidingSearchResultsExampleFragment extends BaseExampleFragment {
 
         mSearchView.setOnSearchListener(new FloatingSearchView.OnSearchListener() {
             @Override
-            public void onSuggestionClicked(final SearchSuggestion searchSuggestion) {
+            public void onSuggestionClicked(final SearchSuggestion searchSuggestion, int position) {
 
                 ColorSuggestion colorSuggestion = (ColorSuggestion) searchSuggestion;
                 DataHelper.findColors(getActivity(), colorSuggestion.getBody(),
