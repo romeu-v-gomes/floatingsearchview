@@ -61,7 +61,7 @@ public class SearchSuggestionsAdapter extends RecyclerView.Adapter<RecyclerView.
 
     public interface Listener {
 
-        void onItemSelected(SearchSuggestion item);
+        void onItemSelected(SearchSuggestion item, int position);
 
         void onMoveItemToSearchClicked(SearchSuggestion item);
     }
@@ -147,7 +147,11 @@ public class SearchSuggestionsAdapter extends RecyclerView.Adapter<RecyclerView.
                     public void onItemClicked(int adapterPosition) {
 
                         if (mListener != null) {
-                            mListener.onItemSelected(mSearchSuggestions.get(adapterPosition));
+                            int position = isReversed() ?
+                                    getItemCount() - adapterPosition - 1 :
+                                    adapterPosition;
+                            mListener.onItemSelected(mSearchSuggestions.get(adapterPosition),
+                                    position);
                         }
                     }
 
