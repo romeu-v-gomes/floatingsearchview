@@ -1,4 +1,5 @@
-Floating Search View [![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-Floating%20Search%20View-green.svg?style=true)](https://android-arsenal.com/details/1/2842)
+Floating Search View [![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-Floating%20Search%20View-green.svg?style=true)](https://android-arsenal.com/details/1/2842) [![](https://jitpack.io/v/makarenkoanton/floatingsearchview.svg)](https://jitpack.io/#makarenkoanton/floatingsearchview)
+
 =============
 
 An implementation of a floating search box with search suggestions, also called persistent search bar.
