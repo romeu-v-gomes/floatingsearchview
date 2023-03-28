@@ -118,7 +118,7 @@ public class SlidingSearchViewExampleFragment extends BaseExampleFragment {
 
         mSearchView.setOnSearchListener(new FloatingSearchView.OnSearchListener() {
             @Override
-            public void onSuggestionClicked(final SearchSuggestion searchSuggestion) {
+            public void onSuggestionClicked(final SearchSuggestion searchSuggestion, int position) {
 
                 mLastQuery = searchSuggestion.getBody();
             }

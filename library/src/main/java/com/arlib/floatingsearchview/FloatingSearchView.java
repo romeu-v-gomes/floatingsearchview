@@ -204,6 +204,7 @@ public class FloatingSearchView extends FrameLayout {
     private OnSuggestionsListHeightChanged mOnSuggestionsListHeightChanged;
     private long mSuggestionSectionAnimDuration;
     private OnClearSearchActionListener mOnClearSearchActionListener;
+    private ViewTreeObserver.OnGlobalLayoutListener mOnGlobalLayoutListener;
 
     //An interface for implementing a listener that will get notified when the suggestions
     //section's height is set. This is to be used internally only.
@@ -250,9 +251,10 @@ public class FloatingSearchView extends FrameLayout {
          * Called when a suggestion was clicked indicating
          * that the current search has completed.
          *
-         * @param searchSuggestion
+         * @param searchSuggestion Suggestion clicked.
+         * @param position Position of the clicked suggestion.
          */
-        void onSuggestionClicked(SearchSuggestion searchSuggestion);
+        void onSuggestionClicked(SearchSuggestion searchSuggestion, int position);
 
         /**
          * Called when the current search has completed
@@ -443,7 +445,7 @@ public class FloatingSearchView extends FrameLayout {
 
     private void setupViews(AttributeSet attrs) {
 
-        mSuggestionsSection.setEnabled(false);
+        setEnabled(false);
 
         if (attrs != null) {
             applyXmlAttributes(attrs);
@@ -1127,7 +1129,7 @@ public class FloatingSearchView extends FrameLayout {
     public void setDismissOnOutsideClick(boolean enable) {
 
         mDismissOnOutsideTouch = enable;
-        mSuggestionsSection.setOnTouchListener(new OnTouchListener() {
+        setOnTouchListener(new OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
 
@@ -1288,9 +1290,9 @@ public class FloatingSearchView extends FrameLayout {
                 new SearchSuggestionsAdapter.Listener() {
 
                     @Override
-                    public void onItemSelected(SearchSuggestion item) {
+                    public void onItemSelected(SearchSuggestion item, int position) {
                         if (mSearchListener != null) {
-                            mSearchListener.onSuggestionClicked(item);
+                            mSearchListener.onSuggestionClicked(item, position);
                         }
 
                         if (mDismissFocusOnItemSelection) {
@@ -1349,8 +1351,11 @@ public class FloatingSearchView extends FrameLayout {
 
     private void swapSuggestions(final List<? extends SearchSuggestion> newSearchSuggestions,
                                  final boolean withAnim) {
-
-        mSuggestionsList.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+        // Prevent calling twice for single swap
+        if (mOnGlobalLayoutListener != null) {
+            Util.removeGlobalLayoutObserver(mSuggestionsList, mOnGlobalLayoutListener);
+        }
+        mOnGlobalLayoutListener = new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
                 Util.removeGlobalLayoutObserver(mSuggestionsList, this);
@@ -1366,7 +1371,9 @@ public class FloatingSearchView extends FrameLayout {
                 }
                 mSuggestionsList.setAlpha(1);
             }
-        });
+        };
+        mSuggestionsList.getViewTreeObserver().addOnGlobalLayoutListener(mOnGlobalLayoutListener);
+
         mSuggestionsList.setAdapter(mSuggestionsAdapter);//workaround to avoid list retaining scroll pos
         mSuggestionsList.setAlpha(0);
         mSuggestionsAdapter.swapData(newSearchSuggestions);
@@ -1429,9 +1436,15 @@ public class FloatingSearchView extends FrameLayout {
     //returns the cumulative height that the current suggestion items take up or the given max if the
     //results is >= max. The max option allows us to avoid doing unnecessary and potentially long calculations.
     private int calculateSuggestionItemsHeight(List<? extends SearchSuggestion> suggestions, int max) {
+        if (mSuggestionsList.getChildCount() < suggestions.size()) {
+            return max;
+        }
 
         //todo
         // 'i < suggestions.size()' in the below 'for' seems unneeded, investigate if there is a use for it.
+        // NOTE ebosch: 20/07/2017 I think 'i < suggestions.size()' might be here to avoid
+        // calculating more children than the number of current suggestions. But if this happens
+        // might be that mSuggestionsList has not already been populated with new suggestions items.
         int visibleItemsHeight = 0;
         for (int i = 0; i < suggestions.size() && i < mSuggestionsList.getChildCount(); i++) {
             visibleItemsHeight += mSuggestionsList.getChildAt(i).getHeight();
@@ -1527,7 +1540,7 @@ public class FloatingSearchView extends FrameLayout {
 
         //if we don't have focus, we want to allow the client's views below our invisible
         //screen-covering view to handle touches
-        mSuggestionsSection.setEnabled(focused);
+        setEnabled(focused);
     }
 
     private void changeIcon(ImageView imageView, Drawable newIcon, boolean withAnim) {
@@ -1815,7 +1828,13 @@ public class FloatingSearchView extends FrameLayout {
     public Parcelable onSaveInstanceState() {
         Parcelable superState = super.onSaveInstanceState();
         SavedState savedState = new SavedState(superState);
+
         savedState.suggestions = mSuggestionsAdapter.getDataSet();
+        if (mSuggestionsAdapter.isReversed()) {
+            // Reverse a copy of the suggestions to avoid altering original list
+            Collections.reverse(new ArrayList<>(savedState.suggestions));
+        }
+
         savedState.isFocused = mIsFocused;
         savedState.query = getQuery();
         savedState.suggestionTextSize = mSuggestionsTextSizePx;
@@ -1874,7 +1893,7 @@ public class FloatingSearchView extends FrameLayout {
         setCloseSearchOnKeyboardDismiss(savedState.dismissOnSoftKeyboardDismiss);
         setDismissFocusOnItemSelection(savedState.dismissFocusOnSuggestionItemClick);
 
-        mSuggestionsSection.setEnabled(mIsFocused);
+        setEnabled(mIsFocused);
         if (mIsFocused) {
 
             mBackgroundDrawable.setAlpha(BACKGROUND_DRAWABLE_ALPHA_SEARCH_FOCUSED);
